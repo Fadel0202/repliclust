@@ -19,7 +19,7 @@ def check_seed(seed, fn, **kwargs):
 def test_log_volume():
     assert np.allclose(log_volume(1,2), np.log(np.pi))
     assert np.allclose(log_volume(4,3), np.log((4/3)*np.pi*(4**3)))
-    assert np.allclose(log_volume(0,10), -np.Inf)
+    assert np.allclose(log_volume(0,10), -np.inf)
     assert np.allclose(log_volume(1,1), np.log(2))
 
 def test_radius_from_log_volume():
@@ -27,7 +27,7 @@ def test_radius_from_log_volume():
     assert np.allclose(radius_from_log_volume(
                 np.log((4/3)*np.pi*(4**3)), 3
                 ), 4)
-    assert np.allclose(radius_from_log_volume(-np.Inf, 10), 0)
+    assert np.allclose(radius_from_log_volume(-np.inf, 10), 0)
     assert np.allclose(radius_from_log_volume(np.log(2), 1), 1)
 
 def test_sample_unit_vectors():
