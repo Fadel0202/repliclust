@@ -29,6 +29,7 @@ from repliclust.base import set_seed, SUPPORTED_DISTRIBUTIONS
 from repliclust import base, overlap, maxmin, distributions
 from repliclust.base import DataGenerator, get_supported_distributions
 from repliclust.maxmin import MaxMinArchetype as Archetype
+from repliclust.viz import plot
 
 config.init_rng()
 
