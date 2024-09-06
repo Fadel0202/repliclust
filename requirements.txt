@@ -1,4 +1,7 @@
 numpy
-threadpoolctl
+matplotlib
 scipy
 tqdm
+threadpoolctl
+scikit-learn
+umap-learn
