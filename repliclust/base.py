@@ -508,6 +508,15 @@ class Archetype():
 
         for key, val in kwargs.items():
             setattr(self, key, val)
+
+    def synthesize(self, n_samples=None, quiet=False):
+        """ 
+        Convenience method to create data from archetype directly,
+        without having to instantiate a DataGenerator first.
+        """
+        return DataGenerator(self, n_datasets=1).synthesize(
+            n_samples=n_samples, quiet=quiet
+        )
     
     def sample_mixture_model(self, quiet=False):
         """
