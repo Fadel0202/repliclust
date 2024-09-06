@@ -244,7 +244,7 @@ class ConstrainedOverlapCenters(ClusterCenterSampler):
 
         # Initialize parameters for tracking optimization progress
         epoch = 0
-        grad_size = np.Inf; loss_curr = np.Inf; loss_prev = np.Inf
+        grad_size = np.inf; loss_curr = np.inf; loss_prev = np.inf
         while self._check_for_continuation(epoch, loss_curr, loss_prev,
                                            grad_size):
             if progress_bar: progress_bar.update(n=1)
@@ -306,7 +306,7 @@ class ConstrainedOverlapCenters(ClusterCenterSampler):
                              desc="Optimizing Cluster Centers")
                         )
 
-        best_loss = np.Inf
+        best_loss = np.inf
         best_centers = None
         for optimization_restart in range(self.n_restarts):
             # Randomly initialize cluster centers
