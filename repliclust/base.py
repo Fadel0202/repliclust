@@ -721,7 +721,7 @@ class DataGenerator():
             yield (X, y, arch)
 
 
-    def synthesize(self, n_samples=None, quiet=False):
+    def synthesize(self, n_samples=None, quiet=None):
         """
         Synthesize a data set according to the specified archetype(s).
         If this :py:class:`DataGenerator` consists of more than one
@@ -754,6 +754,10 @@ class DataGenerator():
                          .sample_group_sizes(
                             arch, 
                             n_samples if n_samples else arch.n_samples))
+        
+        if quiet is None:
+            quiet = self._quiet if self._quiet is not None else False
+
         X, y = (arch.sample_mixture_model(quiet=quiet)
                     .sample_data(group_sizes))
         # increment the index for the next archetype

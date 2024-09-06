@@ -15,7 +15,9 @@ dependencies = [
   "numpy",
   "scipy",
   "tqdm",
-  "threadpoolctl"
+  "threadpoolctl",
+  "scikit-learn",
+  "umap-learn"
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
