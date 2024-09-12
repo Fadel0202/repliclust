@@ -37,8 +37,7 @@ sample synthetic data sets with the desired geometries.
 """
 
 import numpy as np
-
-from repliclust import config
+from repliclust import config as CONFIG
 from repliclust.utils import sample_unit_vectors
 
 # names and default parameters of supported probability distribution
@@ -66,7 +65,7 @@ def set_seed(seed):
     seed : int
         Random seed.
     """
-    config._rng = np.random.default_rng(seed)
+    CONFIG._rng = np.random.default_rng(seed)
 
 
 def get_supported_distributions():
@@ -564,6 +563,12 @@ class Archetype():
         # self._centers = None
 
         return mixture_model
+    
+    def __repr__(self):
+        return "Archetype(name=\"{}\")".format(name=self.name)
+
+    def __str__(self):
+        return self.name if self.name is not None else self.__repr__()
 
 
 

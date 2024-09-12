@@ -18,7 +18,10 @@ dependencies = [
   "tqdm",
   "threadpoolctl",
   "scikit-learn",
-  "umap-learn"
+  "umap-learn",
+  "openai",
+  "python-dotenv",
+  "torch"
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
