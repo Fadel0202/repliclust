@@ -11,7 +11,7 @@ from sklearn.manifold import TSNE
 import umap
 
 
-def plot(X, y=None, dimensionality_reduction="tsne", **dim_red_params):
+def plot(X, y=None, dimensionality_reduction="tsne", dim_red_params={}, **plot_params):
     """ Plot a dataset with clusters. """
     plt.figure()
 
@@ -34,7 +34,7 @@ def plot(X, y=None, dimensionality_reduction="tsne", **dim_red_params):
     elif X.shape[1] < 2:
         raise ValueError(f"dimensionality must be >=2 (found '{X.shape[1]}')")
 
-    plt.scatter(T[:,0], T[:,1], c=y)
+    plt.scatter(T[:,0], T[:,1], c=y, **plot_params)
     
     if X.shape[1] == 2:
         plt.xlabel("X1")
