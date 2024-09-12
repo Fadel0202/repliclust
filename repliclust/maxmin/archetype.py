@@ -5,14 +5,17 @@ values of various geometric parameters.
 """
 
 import numpy as np
+import openai
+import json
 
+import repliclust.natural_language as nl
+from repliclust import config as CONFIG
 from repliclust.base import Archetype
 from repliclust.overlap.centers import ConstrainedOverlapCenters
 
 from repliclust.maxmin.covariance import MaxMinCovarianceSampler
 from repliclust.maxmin.groupsizes import MaxMinGroupSizeSampler
 from repliclust.distributions import FixedProportionMix
-
 
 
 def validate_overlaps(max_overlap=0.05,min_overlap=1e-3):
@@ -254,6 +257,59 @@ class MaxMinArchetype(Archetype):
             distribution_sampler,
             **covariance_args, **groupsize_args, **center_args,
             )
+        
+    def from_verbal_description(description: str, name=None, openai_api_key=None):
+        """ Instantiate MaxMinArchetype from a verbal description. """
+        if (nl.OPENAI_CLIENT is None) and (openai_api_key is not None):
+            nl.load_openai_client(api_key=openai_api_key)
+        elif (nl.OPENAI_CLIENT is None) and (openai_api_key is None):
+            raise Exception(
+                "Failed to initialize OpenAI client." +
+                " Either put OPENAI_API_KEY=<...> into the .env file and reload the module" +
+                " or pass openai_api_key=<...> as an argument in the function call."
+            )
+        
+        archetype_query = nl.OPENAI_CLIENT.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": nl.MAKE_ARCHETYPE_SYSTEM_PROMPT,
+                },
+                {
+                    "role": "user", 
+                    "content": nl.MAKE_ARCHETYPE_PROMPT_TEMPLATE.format(description=description)
+                }
+            ],
+            temperature=0.0,
+            response_format= { "type": "json_object" },
+            seed=CONFIG._seed,
+        )
+        arch_json = archetype_query.choices[0].message.content
 
+        if name is None:
+            name_query = nl.OPENAI_CLIENT.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": nl.MAKE_ARCHETYPE_NAME_SYSTEM_PROMPT,
+                    },
+                    {
+                        "role": "user", 
+                        "content": nl.MAKE_ARCHETYPE_NAME_PROMPT_TEMPLATE.format(description=description)
+                    }
+                ],
+                temperature=0.0,
+                seed=CONFIG._seed,
+            )
+            name_str = name_query.choices[0].message.content
+
+        try:
+            arch_json = json.loads(arch_json)
+            arch_json["name"] = name_str if name is None else name
+            return MaxMinArchetype(**arch_json)
+        except Exception as e:
+            raise Exception("Failed to process this data set archetype. Please rephrase and try again.")
         
         
