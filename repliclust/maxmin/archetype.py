@@ -310,6 +310,7 @@ class MaxMinArchetype(Archetype):
             arch_json["name"] = name_str if name is None else name
             return MaxMinArchetype(**arch_json)
         except Exception as e:
+            print(arch_json)
             raise Exception("Failed to process this data set archetype. Please rephrase and try again.")
         
         

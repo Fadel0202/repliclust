@@ -42,9 +42,11 @@ from repliclust.utils import sample_unit_vectors
 
 # names and default parameters of supported probability distribution
 SUPPORTED_DISTRIBUTIONS = {
+    'gaussian': {},
     'normal': {},
     'standard_t': {'df': 5},
     'exponential': {},
+    'uniform': {},
     'beta': {'a': 2.5, 'b': 8.5},
     'chisquare': {'df': 5},
     'gumbel': {},
@@ -565,7 +567,7 @@ class Archetype():
         return mixture_model
     
     def __repr__(self):
-        return "Archetype(name=\"{}\")".format(name=self.name)
+        return "Archetype(name=\"{name}\")".format(name=self.name)
 
     def __str__(self):
         return self.name if self.name is not None else self.__repr__()

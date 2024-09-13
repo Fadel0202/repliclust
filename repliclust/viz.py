@@ -20,7 +20,7 @@ def plot(X, y=None, dimensionality_reduction="tsne", dim_red_params={}, **plot_p
 
     elif X.shape[1] > 2:
         if dimensionality_reduction=="tsne":
-            tsne_model = TSNE(n_components=2, perplexity=30, max_iter=1000, **dim_red_params)
+            tsne_model = TSNE(n_components=2, perplexity=30, **dim_red_params)
             T = tsne_model.fit_transform(X)
         elif dimensionality_reduction=="umap":
             umap_model = umap.UMAP(n_neighbors=30, n_components=2, **dim_red_params)

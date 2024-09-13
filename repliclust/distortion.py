@@ -63,8 +63,11 @@ def distort(X, hidden_dim=128, n_layers=16, device="cuda", set_seed=None):
     dim = X.shape[1]
     random_nn = NeuralNetwork(hidden_dim=hidden_dim, dim=dim, n_layers=n_layers).to(device)
 
+    max_length = np.sqrt(np.max(np.sum(X**2,axis=1)))
+    X_norm = X/max_length
+
     with torch.no_grad():
-        X_tensor = torch.tensor(X.astype('float32')).to(device)
+        X_tensor = torch.tensor(X_norm.astype('float32')).to(device)
         X_tf = random_nn(X_tensor).cpu()
     
     return X_tf
