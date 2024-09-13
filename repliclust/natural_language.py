@@ -31,7 +31,18 @@ FEW_SHOT_EXAMPLES = [
     {"input":"eight clusters with 1000 total samples of which half are exponentially distributed and half are normally distributed","output":"{\n  \"n_clusters\": 8,\n  \"n_samples\": 1000,\n  \"aspect_ref\": 1.7,\n  \"aspect_maxmin\": 1.5,\n  \"distributions\": [\"exponential\", \"normal\"],\n  \"distribution_proportions\": [0.5, 0.5]\n}"},
     {"input":"two clusters of different sizes in 10 dimensions that are well-separated","output":"{\n  \"n_clusters\": 2,\n  \"dim\": 10,\n  \"n_samples\": 200,\n  \"aspect_ref\": 2\n  \"aspect_maxmin\": 2,\n  \"radius_maxmin\": 4.0,\n  \"max_overlap\": 0.001,\n  \"min_overlap\": 0.0001\n}"},
     {"input":"very oblong clusters that overlap heavily","output":"{\n  \"n_clusters\": 6,\n  \"n_samples\": 600,\n  \"aspect_ref\": 7,\n  \"aspect_maxmin\": 1.4,\n  \"max_overlap\": 0.4,\n  \"min_overlap\": 0.3\n}"},
-    {"input":"ten clusters with very different shapes","output":"{\n  \"n_clusters\": 10,\n  \"n_samples\": 1000,\n  \"aspect_ref\": 1.5,\n  \"aspect_maxmin\": 3.0,\n  \"radius_ref\": 1.5,\n  \"radius_maxmin\": 3.0\n}"},
+    {"input":"highly separated and very oblong clusters","output":"{\n  \"n_clusters\": 4,\n  \"n_samples\": 400,\n  \"aspect_ref\": 6,\n  \"aspect_maxmin\": 1.6,\n  \"max_overlap\": 1e-4,\n  \"min_overlap\": 1e-5\n}"},
+    {"input":"ten clusters with very different shapes","output":"{\n  \"n_clusters\": 10,\n  \"n_samples\": 1000,\n  \"aspect_ref\": 1.5,\n  \"aspect_maxmin\": 3.0,\n  \"radius_maxmin\": 3.0\n}"},
+    {"input":"twelve well-separated clusters with very different shapes", "output":"{\n  \"n_clusters\": 12,\n  \"n_samples\": 1200,\n  \"aspect_ref\": 1.5,\n  \"aspect_maxmin\": 5.0,\n \"radius_maxmin\": 5.0, \n \"max_overlap\": 1e-4,\n  \"min_overlap\": 1e-5\n}}"},
+    {"input": "twelve highly separated Gaussian clusters with very different shapes", "output": "{\n  \"n_clusters\": 12,\n  \"n_samples\": 1200,\n  \"aspect_ref\": 1.5,\n  \"aspect_maxmin\": 5.0,\n \"radius_maxmin\": 5.0, \n \"max_overlap\": 1e-4,\n  \"min_overlap\": 1e-5\n \"distributions\": [\"normal\"]}}"},
+    {"input": "five heavy-tailed clusters", "output": "{\n  \"n_clusters\": 5,\n  \"n_samples\": 500,\n  \"aspect_ref\": 1.5,\n \"distributions\": [\"standard_t\", \"lognormal\", \"pareto\"]}}"},
+    {"input": "clusters with holes", "output": "{\"distributions\": [\"f\"]}"},
+    {"input": "clusters from a variety of distributions", "output": "{\"distributions\": [\"normal\", \"exponential\", \"gamma\", \"weibull\", \"lognormal\"]}"},
+    {"input": "clusters from all different distributions", "output": "{\"distributions\": ['normal', 'standard_t', 'exponential', 'beta', 'uniform', 'chisquare', 'gumbel', 'weibull', 'gamma', 'f', and 'lognormal']}"},
+    {"input": "clusters from different distributions", "output": "{\"distributions\": ['normal', 'exponential', 'beta', 'uniform', 'chisquare', 'gumbel', 'weibull', 'gamma', 'f', and 'lognormal']}"},
+    {"input": "highly separated clusters from all different distributions but no heavy tails", "output": "{\"max_overlap\": 1e-4,\n  \"min_overlap\": 1e-5,\n \"distributions\": ['normal', 'exponential', 'beta', 'uniform', 'chisquare', 'gumbel', 'weibull', 'gamma', 'f', and 'lognormal']}"},
+    {"input": "seven clusters with uniform distribution with light overlap", "output": "{ \"max_overlap\": 0.025, \n\"min_overlap\": 0.0025,\n \"distributions\": [\"uniform\"]}"},
+    {"input": "clusters with bounded support", "output": "{\"distributions\": [\"beta\", \"uniform\"]}"},
 ]
 
 FEW_SHOT_NAME_EXAMPLES = [
@@ -64,9 +75,14 @@ aspect_ref: float >= 1, the eccentricity of a typical cluster (how oblong vs sph
 aspect_maxmin: float >= 1, how much the eccentricity varies across clusters in a data set
 radius_maxmin: float >= 1, how much cluster radius (and thereby cluster volume) varies across the clusters
 max_overlap: float > 0, the maximum allowed overlap between any pair of clusters (0.1-0.2 is significant overlap, 0.01-0.05 is little overlap, 0.001 is very little overlap, and 0.0001 and lower is well-separated)
-min_overlap: float > 0, the minimum amount of overlap each cluster should have with some other cluster, preventing a cluster from being too far away from all other clusters; this value should not be too close to max_overlap to prevent convergence issues
+min_overlap: float > 0, the minimum amount of overlap each cluster should have with some other cluster, preventing a cluster from being too far away from all other clusters
 imbalance_ratio: float >= 1, specifies how imbalanced the number of data points per cluster is
-distributions: list[str], determines the probability distributions to use for the clusters
+distributions: list[str], determines the probability distributions to use for the clusters; the available distributions are 'normal', 'standard_t', 'exponential', 'beta', 'uniform', 'chisquare', 'gumbel', 'weibull', 'gamma', 'pareto', 'f', and 'lognormal'
+
+IMPORTANT NOTES:
+Any words like "separated", "far away", "close together", or "overlapping" refer to the overlap between clusters. Far apart means that max_overlap is 1e-4 or less
+Always make min_overlap smaller than max_overlap, usually ten times smaller!
+ONLY include the Pareto ('pareto') distribution if the user specifically asks for heavy tails!
    
 EXAMPLES:
 

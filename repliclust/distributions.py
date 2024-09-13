@@ -114,7 +114,7 @@ def parse_distribution(distr_name: str, params: dict = {}):
                 + " of supported distributions is " 
                 + str(sorted(SUPPORTED_DISTRIBUTION_NAMES)))
     else:
-        if distr_name == "normal":
+        if (distr_name == "gaussian") or (distr_name == "normal"):
             return Normal()
         elif distr_name == "exponential":
             return Exponential()
