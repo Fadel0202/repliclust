@@ -56,7 +56,7 @@ Why Use **repliclust**?
 Reference
 ---------
 
-For more details, check out our paper: `High-Level Synthetic Data Generation Based on Data Set Archetypes <https://arxiv.org/abs/2303.14301>`_.
+For more details, check out our paper: `High-Level Synthetic Data Generation with Data Set Archetypes <https://arxiv.org/abs/2303.14301>`_.
 
 
 .. toctree::
