@@ -166,7 +166,7 @@ def distort(X, hidden_dim=128, n_layers=16, device="cuda", set_seed=None):
         X_tensor = torch.tensor(X_norm.astype('float32')).to(device)
         X_tf = random_nn(X_tensor).cpu()
     
-    return X_tf
+    return X_tf.numpy()
 
 
 def wrap_around_sphere(X):

@@ -513,10 +513,15 @@ class Archetype():
         """ 
         Convenience method to create data from archetype directly,
         without having to instantiate a DataGenerator first.
+
+        Compared to other synthesis functions, this one returns 
+        only the data (X, y), since we already know what the
+        archetype is.
         """
-        return DataGenerator(self, n_datasets=1).synthesize(
+        X, y, _ = DataGenerator(self, n_datasets=1).synthesize(
             n_samples=n_samples, quiet=quiet
         )
+        return (X,y)
     
     def sample_mixture_model(self, quiet=False):
         """

@@ -1,4 +1,4 @@
-Generating Multiple Similar Datasets
+What is an Archetype?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Using ``repliclust``, you can generate many different synthetic data

@@ -34,6 +34,8 @@ individual classes and functions in **repliclust**.
    maxmin
    overlap
    distributions
+   distortion
+   viz
 
 
 
