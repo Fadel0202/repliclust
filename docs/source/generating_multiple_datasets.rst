@@ -3,10 +3,7 @@ What is an Archetype?
 
 Using ``repliclust``, you can generate many different synthetic data
 sets that all look similar. To illustrate, we will now generate nine
-different data sets based on the “oblong” archetype defined in the
-:doc:`basic_usage` section. In the simulation below, we define the
-archetype and data generator again for convenience.
-
+different data sets based on an archetype specifying oblong clusters.
 
 .. code-block:: python
 

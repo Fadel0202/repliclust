@@ -5,11 +5,11 @@ The easiest way to get started using ``repliclust`` is to create
 synthetic data sets from high-level descriptions in English. Our 
 natural language recognition builds on OpenAI's API, so using these
 features requires providing your OpenAI API key. You can set it as
-`OPENAI_API_KEY=<...>` in an .env file, or pass it to individual
-functions as a keyword argument `openai_api_key=<...>`.
+``OPENAI_API_KEY=<...>`` in an .env file, or pass it to individual
+functions as a keyword argument ``openai_api_key=<...>``.
 
 Once the package recognizes your OpenAI key, you generate data
-directly using the `repliclust.generate` function. For example, 
+directly using the ``repliclust.generate`` function. For example, 
 
 .. code-block:: python
 
@@ -21,14 +21,15 @@ directly using the `repliclust.generate` function. For example,
 
     rpl.plot(X, y)
 
+
 .. image:: user_guide_img/getting_started_1.png
 
-The `repliclust.plot` function is convenient for creating plots in
+The ``repliclust.plot`` function is convenient for creating plots in
 a notebook environment; it will automatically apply t-SNE (or UMAP)
 dimensionality reduction if the data has more than two dimensions.
 
 Rather than directly generate data, you can first create an archetype. The 
-`Archetype.describe` function prints the parameters of your archetype. to
+``Archetype.describe`` function prints the parameters of your archetype. to
 understand what these parameters mean, read :doc:`specifying_an_archetype`.
 
 For example,
@@ -73,8 +74,8 @@ data sets. Continuing our example,
 .. image:: user_guide_img/getting_started_2.png
 .. image:: user_guide_img/getting_started_3.png
 
-To create irregular cluster shapes, you can use the `repliclust.distort` and
-`repliclust.wrap_around_sphere` functions. The first function creates clusters
+To create irregular cluster shapes, you can use the ``repliclust.distort`` and
+``repliclust.wrap_around_sphere`` functions. The first function creates clusters
 with irregular shapes by passing data through a randomly initialized neural
 network. This function may not work properly if you do not have a GPU with CUDA
 support. The second function wraps a data set around the surface of the sphere.
