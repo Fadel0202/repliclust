@@ -22,7 +22,8 @@ DISTRIBUTION_TEST_PARAMS = {
     "lognormal": {'mean': 1, 'sigma': 1},
     "chisquare": {'df': 10},
     "f": {'dfnum': 5, 'dfden': 10},
-    "pareto": {'a': 0.1}
+    "pareto": {'a': 0.1},
+    "uniform": {'low': 0, 'high': 1.0}
 }
 
 
