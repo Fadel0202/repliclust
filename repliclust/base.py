@@ -42,7 +42,6 @@ from repliclust.utils import sample_unit_vectors
 
 # names and default parameters of supported probability distribution
 SUPPORTED_DISTRIBUTIONS = {
-    'gaussian': {},
     'normal': {},
     'standard_t': {'df': 5},
     'exponential': {},
