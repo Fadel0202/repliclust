@@ -16,6 +16,32 @@ from scipy.stats import ortho_group
 
 
 def construct_near_ortho_matrix(hidden_dim, scaling_factor=0.1):
+    """
+    Construct a near-orthogonal matrix.
+
+    Generates a random near-orthogonal matrix of size `hidden_dim` x `hidden_dim`
+    by perturbing an orthogonal matrix.
+
+    Parameters
+    ----------
+    hidden_dim : int
+        The dimension of the square matrix to generate.
+
+    scaling_factor : float, optional
+        Standard deviation of the normal distribution used to generate logarithms
+        of scaling factors. Defaults to 0.1.
+
+    Returns
+    -------
+    torch.Tensor
+        A `hidden_dim` x `hidden_dim` near-orthogonal matrix of type `torch.float32`.
+
+    Notes
+    -----
+    The generated matrix is obtained by scaling the eigenvalues of a random orthogonal
+    matrix, ensuring the determinant remains ±1.
+
+    """
     axes = ortho_group.rvs(hidden_dim)
     logs = np.random.normal(loc=0, scale=scaling_factor, size=hidden_dim)
     scalings = np.exp(logs - np.mean(logs))
@@ -25,6 +51,24 @@ def construct_near_ortho_matrix(hidden_dim, scaling_factor=0.1):
 
 
 class NeuralNetwork(nn.Module):
+    """
+    Random neural network for data distortion.
+
+    This neural network applies a series of linear and non-linear transformations to input data,
+    intended to distort datasets and make clusters take on irregular shapes.
+
+    Parameters
+    ----------
+    hidden_dim : int, optional
+        The dimensionality of the hidden layers. Defaults to 64.
+
+    dim : int, optional
+        The input and output dimensionality of the data. Defaults to 2.
+
+    n_layers : int, optional
+        The number of hidden layers in the network. Defaults to 50.
+
+    """
     def __init__(self, hidden_dim=64, dim=2, n_layers=50):
         super().__init__()
 
@@ -47,12 +91,64 @@ class NeuralNetwork(nn.Module):
         )
 
     def forward(self, x):
+        """
+        Forward pass of the neural network.
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input tensor of shape (n_samples, dim).
+
+        Returns
+        -------
+        torch.Tensor
+            Transformed tensor of shape (n_samples, dim).
+
+        """
         x_transformed = self.middle_stack(x)
         return x_transformed
     
 
 def distort(X, hidden_dim=128, n_layers=16, device="cuda", set_seed=None):
-    """ Distort dataset with random neural network to make clusters take on irregular shapes. """
+    """
+    Distort a dataset using a random neural network.
+
+    Transforms the input dataset `X` by passing it through a randomly initialized neural network,
+    causing clusters to take on irregular, non-convex shapes.
+
+    Parameters
+    ----------
+    X : array-like of shape (n_samples, n_features)
+        The input data to be distorted.
+
+    hidden_dim : int, optional
+        The dimensionality of the hidden layers in the neural network. Defaults to 128.
+
+    n_layers : int, optional
+        The number of hidden layers in the neural network. Defaults to 16.
+
+    device : {'cuda', 'cpu'}, optional
+        The device on which to perform computations. Defaults to 'cuda'.
+
+    set_seed : int or None, optional
+        Random seed for reproducibility. If `None`, the random seed is not set.
+
+    Returns
+    -------
+    torch.Tensor
+        The distorted data as a tensor of shape (n_samples, n_features).
+
+    Notes
+    -----
+    If CUDA is not available, the device will be automatically switched to 'cpu'.
+
+    Examples
+    --------
+    Distort a dataset and convert the result to a NumPy array:
+
+    >>> X_distorted = distort(X).numpy()
+
+    """
     if not torch.cuda.is_available():
         device = "cpu"
         print("Switched to CPU because CUDA is not available.")
@@ -74,14 +170,47 @@ def distort(X, hidden_dim=128, n_layers=16, device="cuda", set_seed=None):
 
 
 def wrap_around_sphere(X):
-    """ Apply stereographic projection to make the data directional. """
+    """
+    Apply inverse stereographic projection to data.
+
+    Projects the input data `X` onto the unit sphere using inverse stereographic
+    projection, making the data directional.
+
+    Parameters
+    ----------
+    X : array-like of shape (n_samples, n_features)
+        The input data to be projected.
+
+    Returns
+    -------
+    ndarray of shape (n_samples, n_features + 1)
+        The projected data lying on the unit sphere.
+
+    Notes
+    -----
+    The inverse stereographic projection maps points from Euclidean space onto 
+    the sphere. The output data will have one additional dimension compared to 
+    the input.
+
+    Examples
+    --------
+    Project a 2D dataset onto the sphere:
+
+    >>> X_spherical = wrap_around_sphere(X)
+
+    Verify that the projected points lie on the unit sphere:
+
+    >>> np.allclose(np.linalg.norm(X_spherical, axis=1), 1.0)
+    True
+
+    """
     lengths = np.sqrt(np.sum(X**2,axis=1))
     l_max = np.max(lengths)
 
     # normalize data so that the maximum length is 1
     X_tf = X/l_max
 
-    # carry out the stereographic projection to yield x_full on the sphere
+    # carry out the inverse stereographic projection to yield x_full on the sphere
     partial_squared_norms = np.sum(X_tf**2, axis=1)
     x_p = (1 - partial_squared_norms) / (1 + partial_squared_norms)
     x_rest = X_tf * (1 + x_p[:, np.newaxis])

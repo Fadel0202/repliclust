@@ -6,6 +6,7 @@ values of various geometric parameters.
 
 import numpy as np
 import openai
+import copy
 import json
 
 import repliclust.natural_language as nl
@@ -60,7 +61,21 @@ def validate_reference_quantity(ref_qty=1.5, min_allowed_value=1,
     
 
 def validate_archetype_args(**args):
-    """ Validate all provided arguments for a MaxMinArchetype. """
+    """
+    Validate all provided arguments for a MaxMinArchetype.
+
+    This function checks the validity of overlap parameters, max-min ratios, and reference quantities.
+
+    Parameters
+    ----------
+    **args
+        Arbitrary keyword arguments containing parameters to validate.
+
+    Raises
+    ------
+    ValueError
+        If any of the parameters fail their respective validations.
+    """
     validate_overlaps(args['max_overlap'], args['min_overlap'])
 
     maxmin_args = [
@@ -87,24 +102,34 @@ def validate_archetype_args(**args):
 
 def parse_distribution_selection(distributions: list, proportions=None):
     """
-    Parse user selection of probability distributions and reformat it
-    as an input for constructing a FixedProportionMix object.
+    Parse user selection of probability distributions.
+
+    Reformats the user-provided list of distributions and proportions into a format suitable for constructing a `FixedProportionMix` object.
 
     Parameters
     ----------
-    distributions : list of [ str | tuple[str, dict] ]
-        Selection of probability distributions that should appear in
-        each mixture model. Format is a list in which each element is 
-        either the name of the probability distribution OR a tuple whose
-        first entry is the name and the second entry is a dictionary of 
-        distributional parameters. To print all valid distribution 
-        names, call the function 
-        repliclust.print_supported_distributions().
+    distributions : list of str or tuple
+        Selection of probability distributions to include in each mixture model.
+        Each element is either:
+        - A string representing the name of the distribution.
+        - A tuple `(name, params_dict)`, where `name` is the distribution name and `params_dict` is a dictionary of distribution parameters.
+
+    proportions : list of float, optional
+        Proportions of clusters that should have each distribution. If `None`, distributions are equally weighted.
 
     Returns
     -------
-    distributions_parsed : 
-        Input for constructing a FixedProportionMix object.
+    list of tuple
+        A list suitable for constructing a `FixedProportionMix` object, where each element is a tuple `(name, proportion, params_dict)`.
+
+    Raises
+    ------
+    ValueError
+        If `distributions` is not in the expected format.
+
+    Notes
+    -----
+    To print all valid distribution names, call `repliclust.print_supported_distributions()`.
     """
     if not proportions:
         proportions = np.full(len(distributions), 
@@ -132,77 +157,213 @@ def parse_distribution_selection(distributions: list, proportions=None):
 
 class MaxMinArchetype(Archetype):
     """
-    A data set archetype that defines the overall geometry of a data
-    set using max-min ratios.
-    
-    The user sets the ratios between largest and smallest values 
-    of various geometric parameters.
+    A dataset archetype that defines the overall geometry using max-min ratios.
 
+    The user sets the ratios between largest and smallest values of various geometric parameters.
 
     Parameters
     ----------
     n_clusters : int
         The desired number of clusters.
+
     dim : int
         The desired number of dimensions.
-    radius_maxmin : float, >=1
-        Ratio between the maximum and minimum radii among all clusters
-        in a mixture model.
-    aspect_maxmin : float, >=1
-        Ratio between the maximum and minimum aspect ratios among all 
-        clusters in a mixture model.
-    aspect_ref : float, >=1
-        Typical aspect ratio for the clusters in a mixture model.
-        For example, if aspect_ref = 10, we expect that all clusters
-        in the mixture model are strongly elongated.
-    imbalance_maxmin : float, >=1
-        Ratio between the greatest and smallest group sizes among all
-        clusters in the mixture model.
-    min_overlap : float in (0,1)
-        The minimum required overlap between a cluster and *some* other
-        cluster. This minimum overlap allows you to guarantee that no
-        cluster will be isolated from all other clusters.
-    max_overlap : float in (0,1)
-        The maximum allowed level of overlap between any two clusters. 
-        Measured as the fraction of cluster volume that overlaps.
-    scale : float
-        Reference length scale for generated data
-    distributions : list of [str | tuple[str, dict]]
-        Selection of probability distributions that should appear in
-        each mixture model. Format is a list in which each element is 
-        either the name of the probability distribution OR a tuple whose
-        first entry is the name and the second entry is a dictionary of 
-        distributional parameters. To print the names of all supported
-        distributions and their parameters (along with default values), 
-        print the output of repliclust.get_supported_distributions().
-    distributions_proportions :
-        The proportions of clusters that have each distribution listed
-        in `distributions`.
-    mode : {"auto", "lda", "c2c"}
-        Select the degree of precision when computing cluster overlaps.
-    
+
+    n_samples : int
+        Total number of samples in the dataset.
+
+    max_overlap : float, optional
+        Maximum allowed overlap between any two clusters, as a fraction between 0 and 1. Default is 0.05.
+
+    min_overlap : float, optional
+        Minimum required overlap between a cluster and some other cluster, as a fraction between 0 and 1. Default is 1e-3.
+
+    imbalance_ratio : float, optional
+        Ratio between the largest and smallest group sizes among clusters. Must be >= 1. Default is 2.
+
+    aspect_maxmin : float, optional
+        Ratio between the largest and smallest aspect ratios among clusters. Must be >= 1. Default is 2.
+
+    radius_maxmin : float, optional
+        Ratio between the largest and smallest radii among clusters. Must be >= 1. Default is 3.
+
+    aspect_ref : float, optional
+        Reference aspect ratio for clusters. Must be >= 1. Default is 1.5.
+
+    name : str, optional
+        Name of the archetype. If `None`, a default name is assigned.
+
+    scale : float, optional
+        Reference length scale for generated data. Default is 1.0.
+
+    packing : float, optional
+        Packing density parameter affecting cluster placement. Default is 0.1.
+
+    distributions : list of str or tuple, optional
+        Selection of probability distributions for the clusters. Default is `['normal', 'exponential']`.
+
+    distribution_proportions : list of float, optional
+        Proportions of clusters that should have each distribution.
+
+    overlap_mode : {'auto', 'lda', 'c2c'}, optional
+        Degree of precision when computing cluster overlaps: 'lda' is more exact
+         than 'c2c' but more computationally expensive. Default is 'auto', which
+         switches automatically switches from 'lda' to 'c2c'.
+
+    linear_penalty_weight : float, optional
+        Weight of the linear penalty in the overlap optimization. Default is 0.01.
+
+    learning_rate : float or 'auto', optional
+        Learning rate for overlap optimization. If 'auto', it is set based on the dimensionality. Default is 'auto'.
+
     Notes
     -----
+    **Glossary of geometric terms:**
 
-    Below is a short glossary of some geometric terms used above.
+    - **Group size** : Number of data points in a cluster.
+    - **Cluster radius** : Geometric mean of the standard deviations along a cluster's principal axes.
+    - **Cluster aspect ratio** : Ratio between the lengths of the longest and shortest principal axes of a cluster.
 
-    Group size : int
-        The number of data points in a cluster.
-    Cluster radius : float
-        Geometric mean of the standard deviations along a cluster's 
-        principal axes (eigenvectors of covariance matrix).
-    Cluster aspect ratio : float
-        Ratio between the lengths of a cluster's longest and shortest
-        principal axes (eigenvectors of covariance matrix). 
-        This value equals 1 for a spherical cluster and exceeds 1 for 
-        an oblong cluster.
+    Examples
+    --------
+    Create an archetype with default parameters:
+
+    >>> archetype = MaxMinArchetype()
+
+    Create an archetype with specific parameters:
+
+    >>> archetype = MaxMinArchetype(n_clusters=10, dim=5, aspect_ref=2.0)
     """
 
     def guess_learning_rate(self, dim):
         """
-        Guess the appropriate learning rate as a function of dimension.
+        Estimate an appropriate learning rate based on the dimensionality.
+
+        Parameters
+        ----------
+        dim : int
+            The dimensionality of the data.
+
+        Returns
+        -------
+        float
+            Suggested learning rate.
         """
         return 0.5 #0.5*(1/np.log10(10+dim))
+
+    def edit_params(self, suffix=None, **params):
+        """
+        Create a modified copy of this archetype with updated parameters.
+
+        Parameters
+        ----------
+        suffix : str, optional
+            Suffix to append to the archetype's name. If `None`, the suffix 
+            'edited' is used.
+
+        **params
+            Arbitrary keyword arguments representing parameters to update.
+
+        Returns
+        -------
+        MaxMinArchetype
+            A new `MaxMinArchetype` instance with updated parameters.
+        """
+        new_params = copy.deepcopy(self.params)
+        for k,v in params.items():
+            new_params[k] = v
+        # Until implement a natural language based renaming function,
+        # simply note that the archetype has been edited
+        if suffix is None:
+            suffix = "edited"
+        new_params["name"] = self.params["name"] + "_" + suffix
+        return MaxMinArchetype(**new_params)
+
+    def describe(self):
+        """
+        Get a dictionary describing the archetype's parameters.
+
+        Returns
+        -------
+        dict
+            A dictionary containing the archetype's parameters.
+        """
+        return self.params
+    
+    def create_another_like_this(self, suffix=None, **new_params):
+        """
+        Create a new archetype similar to this one with updated parameters.
+
+        Parameters
+        ----------
+        suffix : str, optional
+            Suffix to append to the new archetype's name.
+
+        **new_params
+            Arbitrary keyword arguments representing parameters to update.
+
+        Returns
+        -------
+        MaxMinArchetype
+            A new `MaxMinArchetype` instance with updated parameters.
+        """
+        new_arch = self.edit_params(**new_params, suffix=suffix)
+        return new_arch
+    
+    def sample_hyperparams(
+            self, n=10, 
+            min_n_clusters=1, max_n_clusters=30,
+            min_samples_per_cluster=10, max_samples_per_cluster=1000,
+            min_dim=2, max_dim=50
+        ):
+        """
+        Generate multiple copies of this archetype by sampling hyperparameters.
+
+        Parameters
+        ----------
+        n : int, optional
+            Number of archetype copies to generate. Default is 10.
+
+        min_n_clusters : int, optional
+            Minimum number of clusters. Default is 1.
+
+        max_n_clusters : int, optional
+            Maximum number of clusters. Default is 30.
+
+        min_samples_per_cluster : int, optional
+            Minimum number of samples per cluster. Default is 10.
+
+        max_samples_per_cluster : int, optional
+            Maximum number of samples per cluster. Default is 1000.
+
+        min_dim : int, optional
+            Minimum dimensionality. Default is 2.
+
+        max_dim : int, optional
+            Maximum dimensionality. Default is 50.
+
+        Returns
+        -------
+        list of MaxMinArchetype
+            A list of new `MaxMinArchetype` instances with sampled hyperparameters.
+
+        Notes
+        -----
+        The hyperparameters `n_clusters`, `n_samples`, and `dim` are sampled from Poisson distributions centered around the current archetype's parameters.
+        """
+        def sample_until(f, xmin=None, xmax=None, **params):
+            y = 0
+            while ((y < xmin) or (y > xmax)):
+                y = f(**params)
+            return y
+        return [ 
+            self.create_another_like_this(
+                n_clusters=sample_until(np.random.poisson, min_n_clusters, max_n_clusters, lam=self.n_clusters),
+                n_samples=sample_until(np.random.poisson, self.n_clusters*min_samples_per_cluster, self.n_clusters*max_samples_per_cluster, lam=self.n_samples),
+                dim=sample_until(np.random.poisson, min_dim, max_dim, lam=self.dim),
+                suffix=f"sampled_{i}"
+            ) for i in range(n) 
+        ]
 
     def __init__(
             self, 
@@ -238,6 +399,20 @@ class MaxMinArchetype(Archetype):
 
         validate_archetype_args(**(covariance_args | groupsize_args 
                                                 | center_args))
+        self.params = (
+            { 
+                "n_clusters": n_clusters, 
+                "dim": dim, 
+                "n_samples": n_samples, 
+                "scale": scale,
+                "name": name,
+                "distributions": distributions,
+                "distribution_proportions": distribution_proportions
+            } 
+            | covariance_args 
+            | groupsize_args 
+            | center_args
+        )
 
         # choose cluster center sampler
         if overlap_mode=='auto':
@@ -257,9 +432,37 @@ class MaxMinArchetype(Archetype):
             distribution_sampler,
             **covariance_args, **groupsize_args, **center_args,
             )
-        
+    
+    @staticmethod
     def from_verbal_description(description: str, name=None, openai_api_key=None):
-        """ Instantiate MaxMinArchetype from a verbal description. """
+        """
+        Instantiate a `MaxMinArchetype` from a verbal description.
+
+        Parameters
+        ----------
+        description : str
+            Verbal description of the desired dataset archetype.
+
+        name : str, optional
+            Name to assign to the new archetype. If `None`, a name is generated.
+
+        openai_api_key : str, optional
+            OpenAI API key for accessing the language model. If `None`, the key is read from the configuration.
+
+        Returns
+        -------
+        MaxMinArchetype
+            A new `MaxMinArchetype` instance based on the verbal description.
+
+        Raises
+        ------
+        Exception
+            If the OpenAI client cannot be initialized or the archetype cannot be created.
+
+        Notes
+        -----
+        This method uses a language model to parse the verbal description and generate the archetype parameters.
+        """
         if (nl.OPENAI_CLIENT is None) and (openai_api_key is not None):
             nl.load_openai_client(api_key=openai_api_key)
         elif (nl.OPENAI_CLIENT is None) and (openai_api_key is None):
