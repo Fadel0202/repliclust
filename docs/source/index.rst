@@ -3,10 +3,18 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-High-Level Synthetic Data Generation Based on Data Set Archetypes
+High-Level Synthetic Data Generation with Data Set Archetypes
 =================================================================
 
 **repliclust** is a Python package for generating synthetic datasets with clusters based on **high-level descriptions**. Instead of manually setting low-level parameters like cluster centroids or covariance matrices, you can simply describe the desired characteristics of your data, and **repliclust** will automatically generate datasets that match those specifications.
+
+.. code-block:: python
+
+    import repliclust as rpl
+
+    X, y, _ = rpl.generate("three highly separated oblong clusters in 10D")
+
+Try our demo `here <https://demo.repliclust.org>`_!
 
 
 Key Features
