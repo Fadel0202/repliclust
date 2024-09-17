@@ -25,6 +25,5 @@ data sets within minutes.
 .. toctree::
 
     getting_started
-    basic_usage
     generating_multiple_datasets
     specifying_an_archetype
