@@ -123,7 +123,7 @@ def generate(
     data_generator = DataGenerator(archetypes, n_datasets=len(archetypes), quiet=True)
 
     # make the data
-    data = [ archetype.synthesize(quiet=quiet) for archetype in archetypes ]
+    data = [ (*archetype.synthesize(quiet=quiet), archetype) for archetype in archetypes ]
 
     if return_simple:
         return data[0]

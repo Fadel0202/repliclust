@@ -279,7 +279,7 @@ class MaxMinArchetype(Archetype):
         new_params["name"] = self.params["name"] + "_" + suffix
         return MaxMinArchetype(**new_params)
 
-    def describe(self):
+    def describe(self, exclude_internal_params=True):
         """
         Get a dictionary describing the archetype's parameters.
 
@@ -288,7 +288,13 @@ class MaxMinArchetype(Archetype):
         dict
             A dictionary containing the archetype's parameters.
         """
-        return self.params
+        if exclude_internal_params:
+            return { 
+                k: v for k, v in self.params.items() if k not in 
+                    { 'packing', 'learning_rate', 'linear_penalty_weight' } 
+            }
+        else:
+            return self.params
     
     def create_another_like_this(self, suffix=None, **new_params):
         """
