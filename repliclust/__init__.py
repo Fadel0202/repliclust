@@ -14,6 +14,11 @@ geometric structure. The following modules and subpackages are available.
         Provides the core framework of `repliclust`.
     `repliclust.distributions`
         Implements probability distributions and related functionality.
+    `repliclust.viz`
+        Implements probability distributions and related functionality.
+    `repliclust.distort`
+        Implements post-processing functions for turning convex clusters
+        into more irregularly shaped, non-convex ones.
 
 **Subpackages**:
     `repliclust.maxmin`
@@ -47,7 +52,49 @@ def generate(
         openai_api_key=None
     ):
     """
-    Generate synthetic data by verbally describing data set archetypes. 
+    Generate synthetic datasets based on verbal descriptions of dataset archetypes.
+
+    This function generates synthetic data by converting natural language descriptions
+    of dataset archetypes into data. It leverages OpenAI's language models to interpret
+    the descriptions and synthesize corresponding datasets.
+
+    Parameters
+    ----------
+    archetype_descriptions : str or list of str, optional
+        Descriptions of the dataset archetypes to generate. Can be a single description
+        string or a list of description strings. Defaults to
+        ``["two oblong clusters in 2D with a little overlap"]``.
+    quiet : bool, optional
+        If ``True``, suppresses verbose output during data synthesis. Defaults to ``True``.
+    openai_api_key : str, optional
+        API key for OpenAI. If not provided, the function will attempt to use the API key
+        from the environment variable ``OPENAI_API_KEY``.
+
+    Returns
+    -------
+    data : Dataset or list of Datasets
+        The synthesized dataset(s) generated from the provided archetype descriptions.
+        If a single description is provided, returns a single ``Dataset``; otherwise,
+        returns a list of ``Dataset`` objects.
+
+    Raises
+    ------
+    Exception
+        If the OpenAI client cannot be initialized and no API key is provided.
+
+    Examples
+    --------
+    Generate a single synthetic dataset:
+
+    >>> data = generate("two oblong clusters in 2D with a little overlap")
+
+    Generate multiple synthetic datasets:
+
+    >>> descriptions = [
+    ...     "two oblong clusters in 2D with a little overlap",
+    ...     "three spherical clusters in 3D with significant overlap"
+    ... ]
+    >>> data_list = generate(descriptions)
     """
     if (nl.OPENAI_CLIENT is None) and (openai_api_key is None):
         raise Exception(
@@ -89,4 +136,6 @@ __all__ = [
     'overlap'
     'maxmin',
     'distributions',
+    'distortion'
+    'viz',
 ]
