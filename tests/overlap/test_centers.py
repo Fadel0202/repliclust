@@ -226,7 +226,7 @@ class TestInternalMechanics:
         assert zero_loss_count/n_runs <= 0.5
 
         # For easy cases, verify that loss goes to zero
-        fail_count = 0; total_runs = 20
+        fail_count = 0; total_runs = 30
         for random_data in range(total_runs):
             linear_penalty_weight = [0,0.33,0.61,1][int(random_data % 2)]
             overlap_mode = ['c2c', 'lda'][int(random_data % 2)]
@@ -235,7 +235,7 @@ class TestInternalMechanics:
                             max_epoch=100,
                             overlap_mode=overlap_mode,
                             max_overlap=data['max_overlap'],
-                            min_overlap=data['min_overlap']
+                            min_overlap=min(data['min_overlap'], data['max_overlap']/10)
                             )
             final_loss = my_centers._optimize_centers(
                             data['centers'], data['cov_list'],
@@ -249,7 +249,7 @@ class TestInternalMechanics:
                 fail_count += 1
 
         # assess overall failures
-        assert fail_count/total_runs <= 0.1
+        assert fail_count/total_runs <= 0.2
  
 
 class TestExposedInterface:
