@@ -9,7 +9,7 @@
     ██   ██ ███████ ██      ███████ ██  ██████ ███████  ██████  ███████    ██    
                                                                                  
                                                                               
-## High-Level Synthetic Data Generation with Data Set Archetypes
+## Natural Language-Based Synthetic Data Generation for Cluster Analysis
 
 **repliclust** is a Python package for generating synthetic datasets with clusters based on high-level descriptions. Instead of manually setting low-level parameters like cluster centroids or covariance matrices, you can simply describe the desired characteristics of your data, and repliclust will automatically generate datasets that match those specifications.
 
@@ -87,7 +87,7 @@ X_directional = rpl.wrap_around_sphere(X)
 To reference **repliclust** in your work, please cite:
 ```
 @article{Zellinger:2023,
-  title   = {High-Level Synthetic Data Generation with Data Set Archetypes},
+  title   = {Natural Language-Based Synthetic Data Generation for Cluster Analysis},
   author  = {Zellinger, Michael J and B{\"u}hlmann, Peter},
   journal = {arXiv preprint arXiv:2303.14301},
   doi     = {10.48550/arXiv.2303.14301},
