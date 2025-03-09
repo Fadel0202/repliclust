@@ -10,8 +10,8 @@ become non-convex and take on more irregular shapes beyond ellipsoids.
 """
 
 import numpy as np
-import torch
-from torch import nn
+import torch # type: ignore
+from torch import nn # type: ignore
 from scipy.stats import ortho_group
 
 
