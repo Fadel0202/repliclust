@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.stats import chi2, norm
+from functools import lru_cache
 
 def update_centers(ref_cluster_idx, centers, cov_list, 
                    ave_cov_inv_list, axis_deriv_t_list,
@@ -200,56 +201,82 @@ def quantile_gradients(ref_center, other_centers, ref_cluster_idx,
     return (q, q_grad)
 
 
-def compute_quantiles(ref_cluster_idx, other_cluster_idx, 
-                      centers, cov_list=None, ave_cov_inv_list=None, 
-                      mode='lda'):
-    """
-    Compute the separation quantiles for the other clusters.
-
+@lru_cache(maxsize=128)
+def compute_quantiles_cached(ref_cluster_idx, other_cluster_idx, centers_tuple, cov_list_tuple, mode='lda'):
+    """Version optimisée avec cache de compute_quantiles.
+    
     Parameters
     ----------
     ref_cluster_idx : int
-        The index of the reference cluster.
-    other_cluster_idx : list[int] or ndarray, dtype='int'
-        Indices of some other clusters.
-    centers : ndarray
-        Array of ALL other cluster centers.
-    cov_list : list[ndarray]
-        List of ALL cluster covariance matrices.
-    ave_cov_inv_list : list[ndarray]
-        List of the inverse of pairwise average covariance matrices
-        for ALL pairs of clusters.
-    mode : {'lda','c2c','exact'}
-        Method for computing cluster overlap.
-
+        Index du cluster de référence
+    other_cluster_idx : tuple[int]
+        Indices des autres clusters (en tuple pour être hashable)
+    centers_tuple : tuple
+        Centres des clusters convertis en tuple pour être hashable
+    cov_list_tuple : tuple
+        Liste des matrices de covariance convertie en tuple
+    mode : str, optional
+        Mode de calcul ('lda' ou 'c2c'), par défaut 'lda'
+        
     Returns
     -------
     quantiles : ndarray
-        Separation quantiles for the other clusters, formatted as a
-        vector.
+        Les quantiles de séparation pour les autres clusters
     """
-    delta_mat = np.transpose(centers[ref_cluster_idx,:][np.newaxis,:]
-                             - centers[other_cluster_idx,:])
-    if mode=='lda':
-        axis_mat = matvecprod_vectorized(
-                        ave_cov_inv_list, 
-                        get_1d_idx(ref_cluster_idx, other_cluster_idx,
-                                   len(cov_list)),
-                        delta_mat)
-    elif mode=='c2c':
-        axis_mat = delta_mat
-    elif mode=='exact':
-        raise NotImplementedError("the 'exact' method has not been "
-                                    + "implemented yet.")
+    # Conversion des tuples en arrays de manière optimisée
+    centers = np.array(centers_tuple).reshape(-1, len(centers_tuple)//len(other_cluster_idx))
+    cov_list = [np.array(cov).reshape(int(np.sqrt(len(cov))), -1) for cov in cov_list_tuple]
+    
+    # Calcul vectorisé de la matrice des différences (delta)
+    delta_mat = centers[list(other_cluster_idx)] - centers[ref_cluster_idx]
+    
+    if mode == 'lda':
+        # Calcul optimisé pour le mode LDA
+        idx = get_1d_idx(ref_cluster_idx, other_cluster_idx, len(cov_list))
+        axis_mat = matvecprod_vectorized(cov_list, idx, delta_mat.T)
+    else:  # mode 'c2c'
+        axis_mat = delta_mat.T
+    
+    # Optimisation des transformations de covariance
+    ref_cov = cov_list[ref_cluster_idx]
+    ref_transform = ref_cov @ axis_mat
+    
+    # Calcul vectorisé des transformations spécifiques
+    specific_transform = np.stack([cov_list[j] @ axis_mat for j in other_cluster_idx])
+    
+    # Calcul optimisé des écarts-types marginaux
+    ref_std = np.sqrt(np.einsum('ij,ij->j', axis_mat, ref_transform))[np.newaxis, :]
+    other_std = np.sqrt(np.einsum('ijk,ijk->j', specific_transform.transpose(2,0,1), axis_mat.T[:,:,np.newaxis]))
+    
+    # Calcul vectorisé des produits scalaires
+    axis_dot_delta = np.einsum('ij,ij->j', axis_mat, delta_mat.T)[np.newaxis, :]
+    
+    # Calcul final optimisé des quantiles
+    marginal_std_sum = ref_std + other_std
+    quantiles = (axis_dot_delta/marginal_std_sum).flatten()
+    
+    return quantiles
 
-    axis_dot_delta = np.sum(axis_mat * delta_mat, axis=0)[np.newaxis,:]
-    tf_ref, tf_other = cov_transform(
-                                axis_mat, cov_list, ref_cluster_idx, 
-                                other_cluster_idx)
-    std_ref, std_other = marginal_std(axis_mat, tf_ref, tf_other)
-
-    return (axis_dot_delta/(std_ref + std_other)).flatten()
-
+def compute_quantiles(ref_cluster_idx, other_cluster_idx, centers, cov_list=None, 
+                     ave_cov_inv_list=None, mode='lda'):
+    """Version wrapper optimisée qui utilise le cache"""
+    # Conversion optimisée en types hashables
+    centers_tuple = tuple(map(tuple, centers))
+    other_cluster_idx_tuple = tuple(other_cluster_idx)
+    
+    if cov_list is not None:
+        cov_list_tuple = tuple(tuple(cov.flatten()) for cov in cov_list)
+    else:
+        cov_list_tuple = None
+        
+    if mode == 'c2c':
+        return compute_quantiles_cached(ref_cluster_idx, other_cluster_idx_tuple, 
+                                      centers_tuple, cov_list_tuple, mode='c2c')
+    else:  # mode 'lda'
+        if ave_cov_inv_list is not None:
+            cov_list_tuple = tuple(tuple(cov.flatten()) for cov in ave_cov_inv_list)
+        return compute_quantiles_cached(ref_cluster_idx, other_cluster_idx_tuple, 
+                                      centers_tuple, cov_list_tuple, mode='lda')
 
 def cov_transform(axis_mat, cov_list, ref_cluster_idx, 
                   other_cluster_idx):
@@ -397,12 +424,10 @@ def matvecprod_vectorized(matrix_list, matrix_col_idx, vectors_mat):
         the `i`-th matrix in `matrix_list` by the `i`-th column of 
         `vectors_mat`. Each entry is a ndarray with shape (p,1).
     """
-    return np.concatenate(
-                list(map(lambda j: (matrix_list[matrix_col_idx[j]] 
-                                @ vectors_mat[:,j])[:,np.newaxis],
-                    range(len(matrix_col_idx)))), 
-                axis=1
-            )
+    return np.stack([
+        matrix_list[idx] @ vectors_mat[:,j]
+        for j, idx in enumerate(matrix_col_idx)
+    ], axis=1)
 
 
 def apply_gradient_update(centers, loss_grad,

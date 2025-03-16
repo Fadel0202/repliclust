@@ -13,6 +13,8 @@ from repliclust.base import ClusterCenterSampler
 from repliclust.utils import assemble_covariance_matrix
 from repliclust.random_centers import RandomCenters
 from repliclust.overlap import _gradients
+from concurrent.futures import ProcessPoolExecutor
+import os
 
 
 def overlap2quantile_vec(overlaps):
@@ -350,3 +352,21 @@ class ConstrainedOverlapCenters(ClusterCenterSampler):
         centers_mean = np.mean(centers, axis=0)
         centers_adjusted = centers - centers_mean[np.newaxis,:]
         return centers_adjusted
+
+    def optimize_centers_parallel(self, n_restarts=10):
+        """Version parallélisée de l'optimisation des centres"""
+        with ProcessPoolExecutor(max_workers=min(n_restarts, os.cpu_count())) as executor:
+            futures = []
+            for _ in range(n_restarts):
+                futures.append(executor.submit(self._optimize_single))
+            
+            best_loss = float('inf')
+            best_centers = None
+            
+            for future in futures:
+                centers, loss = future.result()
+                if loss < best_loss:
+                    best_centers = centers
+                    best_loss = loss
+            
+            return best_centers
