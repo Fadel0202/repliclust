@@ -202,65 +202,55 @@ def quantile_gradients(ref_center, other_centers, ref_cluster_idx,
 
 
 @lru_cache(maxsize=128)
-def compute_quantiles_cached(ref_cluster_idx, other_cluster_idx, centers_tuple, cov_list_tuple, mode='lda'):
-    """Version optimisée avec cache de compute_quantiles.
+def compute_quantiles_cached(ref_cluster_idx, other_cluster_idx_tuple, centers_tuple, cov_list_tuple, mode='lda'):
+    """Version optimisée avec cache du calcul des quantiles"""
+    centers = np.array(centers_tuple)
+    other_cluster_idx = list(other_cluster_idx_tuple)
     
-    Parameters
-    ----------
-    ref_cluster_idx : int
-        Index du cluster de référence
-    other_cluster_idx : tuple[int]
-        Indices des autres clusters (en tuple pour être hashable)
-    centers_tuple : tuple
-        Centres des clusters convertis en tuple pour être hashable
-    cov_list_tuple : tuple
-        Liste des matrices de covariance convertie en tuple
-    mode : str, optional
-        Mode de calcul ('lda' ou 'c2c'), par défaut 'lda'
-        
-    Returns
-    -------
-    quantiles : ndarray
-        Les quantiles de séparation pour les autres clusters
-    """
-    # Conversion des tuples en arrays de manière optimisée
-    centers = np.array(centers_tuple).reshape(-1, len(centers_tuple)//len(other_cluster_idx))
-    cov_list = [np.array(cov).reshape(int(np.sqrt(len(cov))), -1) for cov in cov_list_tuple]
+    # Conversion correcte des matrices de covariance
+    cov_list = []
+    for cov_tuple in cov_list_tuple:
+        cov_array = np.array(cov_tuple)
+        # Reshape en matrice 2D si nécessaire
+        if cov_array.ndim == 1:
+            dim = int(np.sqrt(len(cov_array)))
+            cov_array = cov_array.reshape(dim, dim)
+        cov_list.append(cov_array)
     
-    # Calcul vectorisé de la matrice des différences (delta)
-    delta_mat = centers[list(other_cluster_idx)] - centers[ref_cluster_idx]
+    # Calcul des différences entre centres
+    delta_mat = centers[other_cluster_idx] - centers[ref_cluster_idx]
     
     if mode == 'lda':
-        # Calcul optimisé pour le mode LDA
-        idx = get_1d_idx(ref_cluster_idx, other_cluster_idx, len(cov_list))
-        axis_mat = matvecprod_vectorized(cov_list, idx, delta_mat.T)
-    else:  # mode 'c2c'
-        axis_mat = delta_mat.T
-    
-    # Optimisation des transformations de covariance
-    ref_cov = cov_list[ref_cluster_idx]
-    ref_transform = ref_cov @ axis_mat
-    
-    # Calcul vectorisé des transformations spécifiques
-    specific_transform = np.stack([cov_list[j] @ axis_mat for j in other_cluster_idx])
-    
-    # Calcul optimisé des écarts-types marginaux
-    ref_std = np.sqrt(np.einsum('ij,ij->j', axis_mat, ref_transform))[np.newaxis, :]
-    other_std = np.sqrt(np.einsum('ijk,ijk->j', specific_transform.transpose(2,0,1), axis_mat.T[:,:,np.newaxis]))
-    
-    # Calcul vectorisé des produits scalaires
-    axis_dot_delta = np.einsum('ij,ij->j', axis_mat, delta_mat.T)[np.newaxis, :]
-    
-    # Calcul final optimisé des quantiles
-    marginal_std_sum = ref_std + other_std
-    quantiles = (axis_dot_delta/marginal_std_sum).flatten()
-    
-    return quantiles
+        quantiles = []
+        for i, delta in enumerate(delta_mat):
+            # Calcul de la matrice de covariance moyenne
+            ave_cov = (cov_list[ref_cluster_idx] + cov_list[other_cluster_idx[i]]) / 2
+            
+            # Vérification que la matrice est bien 2D
+            if ave_cov.ndim != 2:
+                raise ValueError(f"Matrice de covariance invalide: dimension {ave_cov.ndim}")
+                
+            # Calcul de l'inverse et des quantiles
+            try:
+                ave_cov_inv = np.linalg.inv(ave_cov)
+                axis = ave_cov_inv.dot(delta)
+                axis_norm = np.sqrt(delta.dot(ave_cov_inv.dot(delta)))
+                if axis_norm > 0:
+                    axis = axis / axis_norm
+                quantiles.append(delta.dot(axis))
+            except np.linalg.LinAlgError as e:
+                print(f"Erreur d'inversion pour cluster {i}: {str(e)}")
+                quantiles.append(np.linalg.norm(delta))
+                
+        return np.array(quantiles)
+    else:
+        # Mode centre-à-centre par défaut
+        return np.linalg.norm(delta_mat, axis=1)
 
 def compute_quantiles(ref_cluster_idx, other_cluster_idx, centers, cov_list=None, 
                      ave_cov_inv_list=None, mode='lda'):
-    """Version wrapper optimisée qui utilise le cache"""
-    # Conversion optimisée en types hashables
+    """Wrapper pour la version avec cache"""
+    # Conversion en tuples pour le cache
     centers_tuple = tuple(map(tuple, centers))
     other_cluster_idx_tuple = tuple(other_cluster_idx)
     
@@ -269,14 +259,8 @@ def compute_quantiles(ref_cluster_idx, other_cluster_idx, centers, cov_list=None
     else:
         cov_list_tuple = None
         
-    if mode == 'c2c':
-        return compute_quantiles_cached(ref_cluster_idx, other_cluster_idx_tuple, 
-                                      centers_tuple, cov_list_tuple, mode='c2c')
-    else:  # mode 'lda'
-        if ave_cov_inv_list is not None:
-            cov_list_tuple = tuple(tuple(cov.flatten()) for cov in ave_cov_inv_list)
-        return compute_quantiles_cached(ref_cluster_idx, other_cluster_idx_tuple, 
-                                      centers_tuple, cov_list_tuple, mode='lda')
+    return compute_quantiles_cached(ref_cluster_idx, other_cluster_idx_tuple,
+                                  centers_tuple, cov_list_tuple, mode)
 
 def cov_transform(axis_mat, cov_list, ref_cluster_idx, 
                   other_cluster_idx):

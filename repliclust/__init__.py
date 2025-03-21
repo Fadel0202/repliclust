@@ -138,4 +138,6 @@ __all__ = [
     'distributions',
     'distortion'
     'viz',
+    'Archetype',
+    'ArchetypeOptimized'
 ]
