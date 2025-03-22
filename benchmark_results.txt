@@ -4,72 +4,72 @@ Résultats détaillés des benchmarks
 
 Configuration: C=2, D=2, N=100
 ------------------------------
-Original: 0.133s ± 0.038s
-Mémoire: 1.1 MB
-Optimisé: 0.096s ± 0.005s
+Original: 0.082s ± 0.001s
+Mémoire: 1.2 MB
+Optimisé: 0.073s ± 0.001s
 Mémoire: 0.1 MB
-Accélération: 1.39x
-Ratio mémoire: 15.70x
+Accélération: 1.12x
+Ratio mémoire: 22.88x
 
 Configuration: C=2, D=2, N=200
 ------------------------------
-Original: 0.115s ± 0.031s
+Original: 0.073s ± 0.001s
 Mémoire: 0.0 MB
-Optimisé: 0.079s ± 0.012s
+Optimisé: 0.071s ± 0.000s
 Mémoire: 0.0 MB
-Accélération: 1.45x
-Ratio mémoire: 1.00x
+Accélération: 1.04x
+Ratio mémoire: 2.50x
 
 Configuration: C=2, D=3, N=100
 ------------------------------
-Original: 0.081s ± 0.001s
+Original: 0.070s ± 0.002s
 Mémoire: 0.0 MB
-Optimisé: 0.075s ± 0.011s
+Optimisé: 0.073s ± 0.000s
 Mémoire: 0.0 MB
-Accélération: 1.09x
-Ratio mémoire: 1.60x
+Accélération: 0.96x
+Ratio mémoire: 1.12x
 
 Configuration: C=2, D=3, N=200
 ------------------------------
-Original: 0.084s ± 0.002s
+Original: 0.075s ± 0.005s
 Mémoire: 0.0 MB
-Optimisé: 0.072s ± 0.005s
+Optimisé: 0.069s ± 0.002s
 Mémoire: 0.0 MB
-Accélération: 1.16x
-Ratio mémoire: 1.43x
+Accélération: 1.08x
+Ratio mémoire: 1.83x
 
 Configuration: C=3, D=2, N=100
 ------------------------------
-Original: 0.088s ± 0.003s
+Original: 0.083s ± 0.002s
+Mémoire: 0.1 MB
+Optimisé: 0.081s ± 0.015s
 Mémoire: 0.0 MB
-Optimisé: 0.077s ± 0.008s
-Mémoire: 0.0 MB
-Accélération: 1.15x
-Ratio mémoire: 2.00x
+Accélération: 1.02x
+Ratio mémoire: 3.80x
 
 Configuration: C=3, D=2, N=200
 ------------------------------
-Original: 0.082s ± 0.006s
+Original: 0.074s ± 0.001s
 Mémoire: 0.0 MB
-Optimisé: 0.082s ± 0.011s
+Optimisé: 0.072s ± 0.004s
 Mémoire: 0.0 MB
-Accélération: 1.01x
-Ratio mémoire: 5.00x
+Accélération: 1.03x
+Ratio mémoire: 1.67x
 
 Configuration: C=3, D=3, N=100
 ------------------------------
-Original: 0.093s ± 0.000s
+Original: 0.077s ± 0.001s
 Mémoire: 0.0 MB
-Optimisé: 0.087s ± 0.005s
+Optimisé: 0.068s ± 0.002s
 Mémoire: 0.0 MB
-Accélération: 1.07x
-Ratio mémoire: 0.75x
+Accélération: 1.13x
+Ratio mémoire: 0.17x
 
 Configuration: C=3, D=3, N=200
 ------------------------------
-Original: 0.099s ± 0.001s
+Original: 0.072s ± 0.006s
 Mémoire: 0.0 MB
-Optimisé: 0.075s ± 0.010s
+Optimisé: 0.071s ± 0.002s
 Mémoire: 0.0 MB
-Accélération: 1.33x
-Ratio mémoire: 1.67x
+Accélération: 1.01x
+Ratio mémoire: 1.00x
